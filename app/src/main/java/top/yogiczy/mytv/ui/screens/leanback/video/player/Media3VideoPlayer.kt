@@ -15,7 +15,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
+import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.hls.HlsMediaSource
@@ -36,7 +36,11 @@ class LeanbackMedia3VideoPlayer(
 ) : LeanbackVideoPlayer(coroutineScope) {
     private val videoPlayer = ExoPlayer.Builder(
         context,
-        DefaultRenderersFactory(context).setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
+        DefaultRenderersFactory(context)
+            // 老设备经常会声明支持某些系统解码器，但实际播放 AC3/EAC3 等音轨时并不稳定。
+            // 优先使用 FFmpeg 扩展，并在解码初始化失败时允许回退到其他可用解码器。
+            .setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
+            .setEnableDecoderFallback(true)
     ).build().apply {
         playWhenReady = true
     }
