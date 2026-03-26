@@ -79,6 +79,8 @@ class LeanbackMedia3VideoPlayer(
             createRenderersFactory(extensionRendererMode)
         ).setTrackSelector(
             trackSelector
+        ).setLoadControl(
+            Media3LoadControlPolicy.buildFastChannelSwitchLoadControl()
         ).build().apply {
             playWhenReady = true
         }
