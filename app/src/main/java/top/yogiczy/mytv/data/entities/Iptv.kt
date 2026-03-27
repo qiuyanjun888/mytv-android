@@ -21,6 +21,11 @@ data class Iptv(
      * 播放地址
      */
     val urlList: List<String> = emptyList(),
+
+    /**
+     * 频道台标图片地址
+     */
+    val logo: String = "",
 ) {
     companion object {
         val EXAMPLE = Iptv(

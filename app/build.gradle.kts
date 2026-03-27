@@ -557,6 +557,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidasync)
 
+    // 图片加载
+    implementation(libs.coil.compose)
+
     // 二维码
     implementation(libs.qrose)
 
