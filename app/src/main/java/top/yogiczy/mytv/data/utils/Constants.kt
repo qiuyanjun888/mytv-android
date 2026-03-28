@@ -17,7 +17,7 @@ object Constants {
     /**
      * IPTV源地址
      */
-    const val IPTV_SOURCE_URL = "http://192.168.8.8:9000/iptv/sh/test.m3u"
+    const val IPTV_SOURCE_URL = "http://192.168.8.8:9000/iptv/sh/tel-xteve.m3u"
 
     /**
      * IPTV源缓存时间（毫秒）
