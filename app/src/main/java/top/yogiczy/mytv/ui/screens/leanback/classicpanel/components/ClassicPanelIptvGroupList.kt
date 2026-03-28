@@ -71,7 +71,7 @@ fun LeanbackClassicPanelIptvGroupList(
         modifier = modifier
             .width(140.dp)
             .fillMaxHeight()
-            .background(MaterialTheme.colorScheme.background.copy(0.9f))
+            .background(MaterialTheme.colorScheme.background.copy(0.4f))
             .focusRequester(focusRequester)
             .focusProperties {
                 exit = {
