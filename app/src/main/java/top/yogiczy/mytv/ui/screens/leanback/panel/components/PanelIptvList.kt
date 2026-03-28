@@ -39,6 +39,7 @@ fun LeanbackPanelIptvList(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val iptvList = iptvListProvider()
 
@@ -105,6 +106,7 @@ fun LeanbackPanelIptvList(
                 },
             ),
         onUserAction = onUserAction,
+        onCatchupPlay = onCatchupPlay,
     )
 }
 

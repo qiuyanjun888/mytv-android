@@ -65,6 +65,7 @@ fun LeanbackClassicPanelScreen(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onClose: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
     autoCloseState: PanelAutoCloseState = rememberPanelAutoCloseState(
         timeout = Constants.UI_SCREEN_AUTO_CLOSE_DELAY,
         onTimeout = onClose,
@@ -90,6 +91,7 @@ fun LeanbackClassicPanelScreen(
             onIptvFavoriteListVisibleChange = onIptvFavoriteListVisibleChange,
             onIptvFavoriteToggle = onIptvFavoriteToggle,
             onUserAction = { autoCloseState.active() },
+            onCatchupPlay = onCatchupPlay,
         )
     }
 }
@@ -138,6 +140,7 @@ private fun LeanbackClassicPanelScreenContent(
     onIptvFavoriteListVisibleChange: (Boolean) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val iptvGroupList = iptvGroupListProvider()
 
@@ -218,14 +221,16 @@ private fun LeanbackClassicPanelScreenContent(
         LeanbackVisible({ epgListVisible }) {
             LeanbackClassicPanelEpgList(
                 epgProvider = { epgListProvider().firstOrNull { it.channel == focusedIptv.channelName } },
+                iptvProvider = { focusedIptv },
                 exitFocusRequesterProvider = { focusedIptvFocusRequester },
                 onUserAction = onUserAction,
+                onCatchupPlay = onCatchupPlay,
             )
         }
         LeanbackVisible({ !epgListVisible }) {
             LeanbackClassicPanelVerticalTip(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background.copy(0.7f))
+                    .background(MaterialTheme.colorScheme.background.copy(0.4f))
                     .padding(horizontal = 4.dp),
                 text = "向右查看节目单",
                 onTap = { epgListVisible = true },

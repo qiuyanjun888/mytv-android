@@ -82,6 +82,12 @@ class LeanbackMainContentState(
         }
 
         videoPlayerState.onError {
+            if (_isCatchupPlaying) {
+                _isCatchupPlaying = false
+                _isTempPanelVisible = false
+                return@onError
+            }
+
             if (_currentIptvUrlIdx < _currentIptv.urlList.size - 1) {
                 changeCurrentIptv(_currentIptv, _currentIptvUrlIdx + 1)
             }
@@ -144,6 +150,16 @@ class LeanbackMainContentState(
 
     fun changeCurrentIptvToNext() {
         changeCurrentIptv(getNextIptv())
+    }
+
+    private var _isCatchupPlaying = false
+
+    fun playCatchupUrl(url: String) {
+        _isPanelVisible = false
+        _isTempPanelVisible = true
+        _isCatchupPlaying = true
+        log.d("回看URL: $url")
+        videoPlayerState.prepare(url)
     }
 }
 

@@ -26,6 +26,16 @@ data class Iptv(
      * 频道台标图片地址
      */
     val logo: String = "",
+
+    /**
+     * 回看地址模板，包含 {utc:YmdHMS} 和 {utcend:YmdHMS} 占位符
+     */
+    val catchupSource: String = "",
+
+    /**
+     * 回看天数
+     */
+    val catchupDays: Int = 0,
 ) {
     companion object {
         val EXAMPLE = Iptv(

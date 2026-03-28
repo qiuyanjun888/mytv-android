@@ -61,6 +61,7 @@ fun LeanbackPanelScreen(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onClose: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
     autoCloseState: PanelAutoCloseState = rememberPanelAutoCloseState(
         timeout = Constants.UI_SCREEN_AUTO_CLOSE_DELAY,
         onTimeout = onClose,
@@ -97,6 +98,7 @@ fun LeanbackPanelScreen(
             onIptvSelected = onIptvSelected,
             onIptvFavoriteToggle = onIptvFavoriteToggle,
             onUserAction = { autoCloseState.active() },
+            onCatchupPlay = onCatchupPlay,
         )
     }
 }
@@ -149,6 +151,7 @@ private fun LeanbackPanelScreenBottom(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val childPadding = rememberLeanbackChildPadding()
 
@@ -184,6 +187,7 @@ private fun LeanbackPanelScreenBottom(
                 onIptvSelected = onIptvSelected,
                 onIptvFavoriteToggle = onIptvFavoriteToggle,
                 onUserAction = onUserAction,
+                onCatchupPlay = onCatchupPlay,
             )
         }
     }
@@ -203,6 +207,7 @@ fun LeanbackPanelScreenBottomIptvList(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val iptvFavoriteEnable = iptvFavoriteEnableProvider()
     var favoriteListVisible by remember { mutableStateOf(iptvFavoriteListVisibleProvider()) }
@@ -224,6 +229,7 @@ fun LeanbackPanelScreenBottomIptvList(
                     onIptvFavoriteListVisibleChange(false)
                 },
                 onUserAction = onUserAction,
+                onCatchupPlay = onCatchupPlay,
             )
         else
             LeanbackPanelIptvGroupList(
@@ -247,6 +253,7 @@ fun LeanbackPanelScreenBottomIptvList(
                     }
                 },
                 onUserAction = onUserAction,
+                onCatchupPlay = onCatchupPlay,
             )
     }
 }

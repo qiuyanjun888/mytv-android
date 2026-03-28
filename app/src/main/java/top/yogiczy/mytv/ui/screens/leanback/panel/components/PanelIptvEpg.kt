@@ -3,6 +3,7 @@ package top.yogiczy.mytv.ui.screens.leanback.panel.components
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -31,6 +32,8 @@ import androidx.tv.material3.ListItemDefaults
 import kotlinx.coroutines.flow.distinctUntilChanged
 import top.yogiczy.mytv.data.entities.Epg
 import top.yogiczy.mytv.data.entities.EpgProgramme
+import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.buildCatchupUrl
+import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isCatchupAvailable
 import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isLive
 import top.yogiczy.mytv.data.entities.EpgProgrammeList
 import top.yogiczy.mytv.data.entities.Iptv
@@ -47,7 +50,8 @@ fun LeanbackPanelIptvEpgDialog(
     onDismissRequest: () -> Unit = {},
     iptvProvider: () -> Iptv = { Iptv() },
     epgProvider: () -> Epg = { Epg() },
-    onUserAction: () -> Unit = {}
+    onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     if (showDialogProvider()) {
         val iptv = iptvProvider()
@@ -96,7 +100,15 @@ fun LeanbackPanelIptvEpgDialog(
                                         .focusRequester(focusRequester)
                                         .onFocusChanged { isFocused = it.isFocused || it.hasFocus }
                                         .handleLeanbackKeyEvents(
-                                            onSelect = { focusRequester.requestFocus() },
+                                            onSelect = {
+                                                if (programme.isCatchupAvailable(iptv.catchupDays)
+                                                    && iptv.catchupSource.isNotEmpty()
+                                                ) {
+                                                    onCatchupPlay(programme.buildCatchupUrl(iptv.catchupSource))
+                                                } else {
+                                                    focusRequester.requestFocus()
+                                                }
+                                            },
                                         ),
                                     colors = ListItemDefaults.colors(
                                         containerColor = Color.Transparent,
@@ -125,6 +137,13 @@ fun LeanbackPanelIptvEpgDialog(
                                             Icon(
                                                 Icons.Default.PlayArrow,
                                                 contentDescription = "playing",
+                                            )
+                                        } else if (programme.isCatchupAvailable(iptv.catchupDays)
+                                            && iptv.catchupSource.isNotEmpty()
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Replay,
+                                                contentDescription = "catchup",
                                             )
                                         }
                                     },

@@ -243,6 +243,7 @@ fun LeanbackMainContent(
                         settingsViewModel.iptvChannelFavoriteListVisible = it
                     },
                     onClose = { mainContentState.isPanelVisible = false },
+                    onCatchupPlay = { mainContentState.playCatchupUrl(it) },
                 )
             }
 
@@ -270,7 +271,8 @@ fun LeanbackMainContent(
                         settingsViewModel.iptvChannelFavoriteListVisible = it
                     },
                     onClose = { mainContentState.isPanelVisible = false },
-                    iptvFavoriteEnableProvider = { settingsViewModel.iptvChannelFavoriteEnable }
+                    iptvFavoriteEnableProvider = { settingsViewModel.iptvChannelFavoriteEnable },
+                    onCatchupPlay = { mainContentState.playCatchupUrl(it) },
                 )
             }
         }

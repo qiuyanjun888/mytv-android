@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -42,8 +43,11 @@ import androidx.tv.material3.ListItemDefaults
 import kotlinx.coroutines.flow.distinctUntilChanged
 import top.yogiczy.mytv.data.entities.Epg
 import top.yogiczy.mytv.data.entities.EpgProgramme
+import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.buildCatchupUrl
+import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isCatchupAvailable
 import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isLive
 import top.yogiczy.mytv.data.entities.EpgProgrammeList
+import top.yogiczy.mytv.data.entities.Iptv
 import top.yogiczy.mytv.ui.theme.LeanbackTheme
 import top.yogiczy.mytv.ui.utils.handleLeanbackKeyEvents
 import java.text.SimpleDateFormat
@@ -55,8 +59,10 @@ import kotlin.math.max
 fun LeanbackClassicPanelEpgList(
     modifier: Modifier = Modifier,
     epgProvider: () -> Epg? = { Epg() },
+    iptvProvider: () -> Iptv = { Iptv() },
     exitFocusRequesterProvider: () -> FocusRequester = { FocusRequester.Default },
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val dateFormat = SimpleDateFormat("E MM-dd", Locale.getDefault())
     val epg = epgProvider()
@@ -96,7 +102,7 @@ fun LeanbackClassicPanelEpgList(
                 modifier = modifier
                     .fillMaxHeight()
                     .width(240.dp)
-                    .background(MaterialTheme.colorScheme.background.copy(0.7f))
+                    .background(MaterialTheme.colorScheme.background.copy(0.4f))
                     .focusProperties {
                         exit = {
                             if (it == FocusDirection.Left) exitFocusRequesterProvider()
@@ -107,6 +113,8 @@ fun LeanbackClassicPanelEpgList(
                 items(programmes) { programme ->
                     LeanbackClassicPanelEpgItem(
                         epgProgrammeProvider = { programme },
+                        iptvProvider = iptvProvider,
+                        onCatchupPlay = onCatchupPlay,
                     )
                 }
             }
@@ -119,7 +127,7 @@ fun LeanbackClassicPanelEpgList(
                     modifier = modifier
                         .fillMaxHeight()
                         .width(100.dp)
-                        .background(MaterialTheme.colorScheme.background.copy(0.7f))
+                        .background(MaterialTheme.colorScheme.background.copy(0.4f))
                 ) {
 
                     items(programmesGroup.keys.toList()) {
@@ -139,8 +147,11 @@ fun LeanbackClassicPanelEpgList(
 private fun LeanbackClassicPanelEpgItem(
     modifier: Modifier = Modifier,
     epgProgrammeProvider: () -> EpgProgramme = { EpgProgramme() },
+    iptvProvider: () -> Iptv = { Iptv() },
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val programme = epgProgrammeProvider()
+    val iptv = iptvProvider()
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     val focusRequester = remember { FocusRequester() }
@@ -158,7 +169,13 @@ private fun LeanbackClassicPanelEpgItem(
                 }
                 .handleLeanbackKeyEvents(
                     onSelect = {
-                        focusRequester.requestFocus()
+                        if (programme.isCatchupAvailable(iptv.catchupDays)
+                            && iptv.catchupSource.isNotEmpty()
+                        ) {
+                            onCatchupPlay(programme.buildCatchupUrl(iptv.catchupSource))
+                        } else {
+                            focusRequester.requestFocus()
+                        }
                     },
                 ),
             colors = ListItemDefaults.colors(
@@ -187,6 +204,10 @@ private fun LeanbackClassicPanelEpgItem(
             trailingContent = {
                 if (programme.isLive()) {
                     Icon(Icons.Default.PlayArrow, contentDescription = "playing")
+                } else if (programme.isCatchupAvailable(iptv.catchupDays)
+                    && iptv.catchupSource.isNotEmpty()
+                ) {
+                    Icon(Icons.Default.Replay, contentDescription = "catchup")
                 }
             },
         )

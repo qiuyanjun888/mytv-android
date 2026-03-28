@@ -42,6 +42,7 @@ fun LeanbackPanelIptvGroupList(
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onToFavorite: () -> Unit = {},
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val iptvGroupList = iptvGroupListProvider()
 
@@ -90,6 +91,7 @@ fun LeanbackPanelIptvGroupList(
                 onIptvSelected = onIptvSelected,
                 onIptvFavoriteToggle = onIptvFavoriteToggle,
                 onUserAction = onUserAction,
+                onCatchupPlay = onCatchupPlay,
             )
         }
     }

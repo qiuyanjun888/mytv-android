@@ -51,6 +51,7 @@ fun LeanbackPanelIptvFavoriteList(
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onClose: () -> Unit = {},
     onUserAction: () -> Unit = {},
+    onCatchupPlay: (String) -> Unit = {},
 ) {
     val favoriteListSize = 6
     val childPadding = rememberLeanbackChildPadding()
@@ -151,6 +152,7 @@ fun LeanbackPanelIptvFavoriteList(
                 },
             ),
         onUserAction = onUserAction,
+        onCatchupPlay = onCatchupPlay,
     )
 }
 
