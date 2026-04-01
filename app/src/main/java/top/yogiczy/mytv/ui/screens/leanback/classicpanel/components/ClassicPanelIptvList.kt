@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -116,10 +114,10 @@ fun LeanbackClassicPanelIptvList(
     TvLazyColumn(
         state = listState,
         contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
         modifier = modifier
             .fillMaxHeight()
-            .width(340.dp)
+            .width(380.dp)
             .background(MaterialTheme.colorScheme.background.copy(0.4f)),
     ) {
         itemsIndexed(iptvList, key = { _, iptv -> iptv.hashCode() }) { index, iptv ->
@@ -129,6 +127,7 @@ fun LeanbackClassicPanelIptvList(
             }
 
             LeanbackClassicPanelIptvItem(
+                modifier = Modifier.fillParentMaxHeight(1f / 6f),
                 iptvProvider = { iptv },
                 epgProgrammeCurrentProvider = { epgListProvider().currentProgrammes(iptv) },
                 focusRequesterProvider = { itemFocusRequesterList[index] },
@@ -187,15 +186,11 @@ private fun LeanbackClassicPanelIptvItem(
         }
     }
 
-    CompositionLocalProvider(
-        LocalContentColor provides if (isFocused) MaterialTheme.colorScheme.background
-        else MaterialTheme.colorScheme.onBackground
+    Box(
+        modifier = modifier.clip(ListItemDefaults.shape().shape),
     ) {
-        Box(
-            modifier = Modifier.clip(ListItemDefaults.shape().shape),
-        ) {
-            androidx.tv.material3.ListItem(
-                modifier = modifier
+        androidx.tv.material3.ListItem(
+                modifier = Modifier
                     .focusRequester(focusRequester)
                     .onFocusChanged {
                         isFocused = it.isFocused || it.hasFocus
@@ -216,7 +211,7 @@ private fun LeanbackClassicPanelIptvItem(
                         },
                     ),
                 colors = ListItemDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.onBackground,
+                    focusedContainerColor = Color.Transparent,
                     selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
                         alpha = 0.5f
                     ),
@@ -228,16 +223,11 @@ private fun LeanbackClassicPanelIptvItem(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        // 台标 Logo
+                        // 台标 Logo（始终透明，不参与高亮）
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(
-                                    if (iptv.logo.isEmpty())
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                                    else Color.Transparent
-                                ),
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(6.dp)),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (iptv.logo.isNotEmpty()) {
@@ -247,35 +237,48 @@ private fun LeanbackClassicPanelIptvItem(
                                         .crossfade(true)
                                         .build(),
                                     contentDescription = iptv.name,
-                                    modifier = Modifier.size(40.dp),
+                                    modifier = Modifier.size(72.dp),
                                     contentScale = ContentScale.Fit,
                                 )
                             } else {
                                 Text(
                                     text = iptv.name.take(1),
-                                    fontSize = 16.sp,
+                                    fontSize = 28.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                 )
                             }
                         }
 
-                        // 频道名和当前节目
+                        // 频道名和当前节目（仅此区域高亮）
                         Column(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (isFocused) MaterialTheme.colorScheme.onBackground
+                                    else Color.Transparent
+                                )
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
                         ) {
                             Text(
                                 text = iptv.name,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 fontWeight = FontWeight.Medium,
+                                fontSize = 20.sp,
+                                color = if (isFocused) MaterialTheme.colorScheme.background
+                                else MaterialTheme.colorScheme.onBackground,
                             )
                             Text(
                                 text = currentProgramme?.title ?: "无节目",
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.alpha(0.8f),
+                                color = if (isFocused) MaterialTheme.colorScheme.background
+                                else MaterialTheme.colorScheme.onBackground,
                             )
                         }
                     }
@@ -294,7 +297,6 @@ private fun LeanbackClassicPanelIptvItem(
                 )
             }
         }
-    }
 }
 
 @Preview

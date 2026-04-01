@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import top.yogiczy.mytv.data.entities.CatchupRequest
 import top.yogiczy.mytv.data.entities.Epg
 import top.yogiczy.mytv.data.entities.EpgList
 import top.yogiczy.mytv.data.entities.EpgProgramme
@@ -65,7 +66,7 @@ fun LeanbackClassicPanelScreen(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onClose: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
     autoCloseState: PanelAutoCloseState = rememberPanelAutoCloseState(
         timeout = Constants.UI_SCREEN_AUTO_CLOSE_DELAY,
         onTimeout = onClose,
@@ -140,7 +141,7 @@ private fun LeanbackClassicPanelScreenContent(
     onIptvFavoriteListVisibleChange: (Boolean) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     val iptvGroupList = iptvGroupListProvider()
 

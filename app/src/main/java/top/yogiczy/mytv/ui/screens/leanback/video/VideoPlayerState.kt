@@ -6,6 +6,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,8 +35,24 @@ class LeanbackVideoPlayerState(
     /** 元数据 */
     var metadata by mutableStateOf(LeanbackVideoPlayer.Metadata())
 
+    /** 是否正在播放 */
+    var isPlaying by mutableStateOf(false)
+
+    /** 当前播放位置（ms），-1 表示未知 */
+    var currentPosition by mutableLongStateOf(-1L)
+
+    /** 总时长（ms），-1 表示未知（直播流） */
+    var duration by mutableLongStateOf(-1L)
+
+    /** 播放速度 */
+    var playbackSpeed by mutableFloatStateOf(1f)
+
     fun prepare(url: String) {
         error = null
+        currentPosition = -1L
+        duration = -1L
+        playbackSpeed = 1f
+        instance.setPlaybackSpeed(1f)
         instance.prepare(url)
     }
 
@@ -45,6 +62,19 @@ class LeanbackVideoPlayerState(
 
     fun pause() {
         instance.pause()
+    }
+
+    fun togglePause() {
+        if (isPlaying) instance.pause() else instance.play()
+    }
+
+    fun seekTo(positionMs: Long) {
+        instance.seekTo(positionMs.coerceAtLeast(0))
+    }
+
+    fun changePlaybackSpeed(speed: Float) {
+        playbackSpeed = speed
+        instance.setPlaybackSpeed(speed)
     }
 
     fun setVideoSurfaceView(surfaceView: SurfaceView) {
@@ -90,6 +120,13 @@ class LeanbackVideoPlayerState(
         instance.onPrepared { }
         instance.onMetadata { metadata = it }
         instance.onCutoff { onCutoffListeners.forEach { it.invoke() } }
+        instance.onCurrentPosition { positionMs ->
+            currentPosition = positionMs
+            duration = instance.getDuration()
+        }
+        instance.onIsPlayingChanged { playing ->
+            isPlaying = playing
+        }
     }
 
     fun release() {

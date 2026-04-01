@@ -9,6 +9,7 @@ import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
@@ -271,6 +272,10 @@ class LeanbackMedia3VideoPlayer(
             triggerResolution(videoSize.width, videoSize.height)
         }
 
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            triggerIsPlayingChanged(isPlaying)
+        }
+
         override fun onPlayerError(ex: Media3PlaybackException) {
             if (ex.errorCode == Media3PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
                 videoPlayer.seekToDefaultPosition()
@@ -511,6 +516,16 @@ class LeanbackMedia3VideoPlayer(
     override fun pause() {
         videoPlayer.pause()
     }
+
+    override fun seekTo(positionMs: Long) {
+        videoPlayer.seekTo(positionMs.coerceAtLeast(0))
+    }
+
+    override fun setPlaybackSpeed(speed: Float) {
+        videoPlayer.setPlaybackParameters(PlaybackParameters(speed))
+    }
+
+    override fun getDuration(): Long = videoPlayer.duration
 
     override fun setVideoSurfaceView(surfaceView: SurfaceView) {
         videoSurfaceView = surfaceView

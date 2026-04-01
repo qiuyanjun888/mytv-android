@@ -32,6 +32,12 @@ abstract class LeanbackVideoPlayer(
 
     abstract fun pause()
 
+    open fun seekTo(positionMs: Long) {}
+
+    open fun setPlaybackSpeed(speed: Float) {}
+
+    open fun getDuration(): Long = -1L
+
     abstract fun setVideoSurfaceView(surfaceView: SurfaceView)
 
     private val onResolutionListeners = mutableListOf<(width: Int, height: Int) -> Unit>()
@@ -41,6 +47,8 @@ abstract class LeanbackVideoPlayer(
     private val onPreparedListeners = mutableListOf<() -> Unit>()
     private val onMetadataListeners = mutableListOf<(metadata: Metadata) -> Unit>()
     private val onCutoffListeners = mutableListOf<() -> Unit>()
+    private val onCurrentPositionListeners = mutableListOf<(positionMs: Long) -> Unit>()
+    private val onIsPlayingChangedListeners = mutableListOf<(isPlaying: Boolean) -> Unit>()
 
     private fun clearAllListeners() {
         onResolutionListeners.clear()
@@ -50,6 +58,8 @@ abstract class LeanbackVideoPlayer(
         onPreparedListeners.clear()
         onMetadataListeners.clear()
         onCutoffListeners.clear()
+        onCurrentPositionListeners.clear()
+        onIsPlayingChangedListeners.clear()
     }
 
     protected fun triggerResolution(width: Int, height: Int) {
@@ -97,6 +107,11 @@ abstract class LeanbackVideoPlayer(
             }
         }
         currentPosition = newPosition
+        onCurrentPositionListeners.forEach { it(newPosition) }
+    }
+
+    protected fun triggerIsPlayingChanged(isPlaying: Boolean) {
+        onIsPlayingChangedListeners.forEach { it(isPlaying) }
     }
 
     fun onResolution(listener: (width: Int, height: Int) -> Unit) {
@@ -125,6 +140,14 @@ abstract class LeanbackVideoPlayer(
 
     fun onCutoff(listener: () -> Unit) {
         onCutoffListeners.add(listener)
+    }
+
+    fun onCurrentPosition(listener: (positionMs: Long) -> Unit) {
+        onCurrentPositionListeners.add(listener)
+    }
+
+    fun onIsPlayingChanged(listener: (isPlaying: Boolean) -> Unit) {
+        onIsPlayingChangedListeners.add(listener)
     }
 
     data class PlaybackException(

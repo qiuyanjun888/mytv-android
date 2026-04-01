@@ -22,6 +22,7 @@ import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.itemsIndexed
 import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import kotlinx.coroutines.flow.distinctUntilChanged
+import top.yogiczy.mytv.data.entities.CatchupRequest
 import top.yogiczy.mytv.data.entities.EpgList
 import top.yogiczy.mytv.data.entities.Iptv
 import top.yogiczy.mytv.data.entities.IptvGroupList
@@ -42,7 +43,7 @@ fun LeanbackPanelIptvGroupList(
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onToFavorite: () -> Unit = {},
     onUserAction: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     val iptvGroupList = iptvGroupListProvider()
 

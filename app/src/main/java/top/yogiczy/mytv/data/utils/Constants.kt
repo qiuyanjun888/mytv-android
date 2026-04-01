@@ -22,7 +22,8 @@ object Constants {
     /**
      * IPTV源缓存时间（毫秒）
      */
-    const val IPTV_SOURCE_CACHE_TIME = 1000 * 60 * 60 * 24L // 24小时
+    // const val IPTV_SOURCE_CACHE_TIME = 1000 * 60 * 60 * 24L // 24小时
+    const val IPTV_SOURCE_CACHE_TIME = 0L // 24小时
 
     /**
      * 节目单XML地址

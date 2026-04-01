@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import top.yogiczy.mytv.data.entities.CatchupRequest
 import top.yogiczy.mytv.data.entities.EpgList
 import top.yogiczy.mytv.data.entities.EpgList.Companion.currentProgrammes
 import top.yogiczy.mytv.data.entities.Iptv
@@ -61,7 +62,7 @@ fun LeanbackPanelScreen(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onClose: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
     autoCloseState: PanelAutoCloseState = rememberPanelAutoCloseState(
         timeout = Constants.UI_SCREEN_AUTO_CLOSE_DELAY,
         onTimeout = onClose,
@@ -151,7 +152,7 @@ private fun LeanbackPanelScreenBottom(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     val childPadding = rememberLeanbackChildPadding()
 
@@ -207,7 +208,7 @@ fun LeanbackPanelScreenBottomIptvList(
     onIptvSelected: (Iptv) -> Unit = {},
     onIptvFavoriteToggle: (Iptv) -> Unit = {},
     onUserAction: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     val iptvFavoriteEnable = iptvFavoriteEnableProvider()
     var favoriteListVisible by remember { mutableStateOf(iptvFavoriteListVisibleProvider()) }

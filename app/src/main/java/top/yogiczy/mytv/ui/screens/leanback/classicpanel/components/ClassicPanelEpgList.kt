@@ -35,17 +35,19 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.foundation.ExperimentalTvFoundationApi
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyListState
 import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.ListItemDefaults
 import kotlinx.coroutines.flow.distinctUntilChanged
+import top.yogiczy.mytv.data.entities.CatchupRequest
 import top.yogiczy.mytv.data.entities.Epg
 import top.yogiczy.mytv.data.entities.EpgProgramme
-import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.buildCatchupUrl
 import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isCatchupAvailable
 import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isLive
+import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.toCatchupRequest
 import top.yogiczy.mytv.data.entities.EpgProgrammeList
 import top.yogiczy.mytv.data.entities.Iptv
 import top.yogiczy.mytv.ui.theme.LeanbackTheme
@@ -62,7 +64,7 @@ fun LeanbackClassicPanelEpgList(
     iptvProvider: () -> Iptv = { Iptv() },
     exitFocusRequesterProvider: () -> FocusRequester = { FocusRequester.Default },
     onUserAction: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     val dateFormat = SimpleDateFormat("E MM-dd", Locale.getDefault())
     val epg = epgProvider()
@@ -101,7 +103,7 @@ fun LeanbackClassicPanelEpgList(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = modifier
                     .fillMaxHeight()
-                    .width(240.dp)
+                    .width(300.dp)
                     .background(MaterialTheme.colorScheme.background.copy(0.4f))
                     .focusProperties {
                         exit = {
@@ -148,7 +150,7 @@ private fun LeanbackClassicPanelEpgItem(
     modifier: Modifier = Modifier,
     epgProgrammeProvider: () -> EpgProgramme = { EpgProgramme() },
     iptvProvider: () -> Iptv = { Iptv() },
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     val programme = epgProgrammeProvider()
     val iptv = iptvProvider()
@@ -172,7 +174,7 @@ private fun LeanbackClassicPanelEpgItem(
                         if (programme.isCatchupAvailable(iptv.catchupDays)
                             && iptv.catchupSource.isNotEmpty()
                         ) {
-                            onCatchupPlay(programme.buildCatchupUrl(iptv.catchupSource))
+                            onCatchupPlay(programme.toCatchupRequest(iptv.catchupSource))
                         } else {
                             focusRequester.requestFocus()
                         }
@@ -190,6 +192,7 @@ private fun LeanbackClassicPanelEpgItem(
                 Text(
                     text = programme.title,
                     maxLines = if (isFocused) Int.MAX_VALUE else 1,
+                    fontSize = 20.sp,
                 )
             },
             overlineContent = {
@@ -197,7 +200,7 @@ private fun LeanbackClassicPanelEpgItem(
                 val end = timeFormat.format(programme.endAt)
                 Text(
                     text = "$start  ~ $end",
-                    style = MaterialTheme.typography.labelMedium,
+                    fontSize = 15.sp,
                     modifier = Modifier.alpha(0.8f),
                 )
             },

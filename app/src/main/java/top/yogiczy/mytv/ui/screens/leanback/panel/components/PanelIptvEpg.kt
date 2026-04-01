@@ -30,11 +30,12 @@ import androidx.tv.foundation.lazy.list.TvLazyListState
 import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.ListItemDefaults
 import kotlinx.coroutines.flow.distinctUntilChanged
+import top.yogiczy.mytv.data.entities.CatchupRequest
 import top.yogiczy.mytv.data.entities.Epg
 import top.yogiczy.mytv.data.entities.EpgProgramme
-import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.buildCatchupUrl
 import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isCatchupAvailable
 import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.isLive
+import top.yogiczy.mytv.data.entities.EpgProgramme.Companion.toCatchupRequest
 import top.yogiczy.mytv.data.entities.EpgProgrammeList
 import top.yogiczy.mytv.data.entities.Iptv
 import top.yogiczy.mytv.ui.theme.LeanbackTheme
@@ -51,7 +52,7 @@ fun LeanbackPanelIptvEpgDialog(
     iptvProvider: () -> Iptv = { Iptv() },
     epgProvider: () -> Epg = { Epg() },
     onUserAction: () -> Unit = {},
-    onCatchupPlay: (String) -> Unit = {},
+    onCatchupPlay: (CatchupRequest) -> Unit = {},
 ) {
     if (showDialogProvider()) {
         val iptv = iptvProvider()
@@ -104,7 +105,7 @@ fun LeanbackPanelIptvEpgDialog(
                                                 if (programme.isCatchupAvailable(iptv.catchupDays)
                                                     && iptv.catchupSource.isNotEmpty()
                                                 ) {
-                                                    onCatchupPlay(programme.buildCatchupUrl(iptv.catchupSource))
+                                                    onCatchupPlay(programme.toCatchupRequest(iptv.catchupSource))
                                                 } else {
                                                     focusRequester.requestFocus()
                                                 }

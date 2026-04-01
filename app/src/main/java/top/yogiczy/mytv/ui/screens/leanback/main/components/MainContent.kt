@@ -6,8 +6,13 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -42,6 +47,7 @@ import top.yogiczy.mytv.ui.screens.leanback.settings.LeanbackSettingsScreen
 import top.yogiczy.mytv.ui.screens.leanback.settings.LeanbackSettingsViewModel
 import top.yogiczy.mytv.ui.screens.leanback.toast.LeanbackToastState
 import top.yogiczy.mytv.ui.screens.leanback.update.LeanbackUpdateScreen
+import top.yogiczy.mytv.ui.screens.leanback.video.LeanbackCatchupControlsScreen
 import top.yogiczy.mytv.ui.screens.leanback.video.LeanbackVideoScreen
 import top.yogiczy.mytv.ui.screens.leanback.video.rememberLeanbackVideoPlayerState
 import top.yogiczy.mytv.ui.utils.SP
@@ -85,6 +91,32 @@ fun LeanbackMainContent(
         }
     )
 
+    // 回看连续快进/快退档位（1次=10s, 2次=20s, 3次=30s）
+    var catchupSeekLevel by remember { mutableIntStateOf(0) }
+    var catchupSeekResetPending by remember { mutableStateOf(false) }
+
+    // 回看控制菜单显示/隐藏（默认隐藏，操作后显示，20s 无操作自动隐藏）
+    var catchupControlsVisible by remember { mutableStateOf(false) }
+    // 每次操作更新此时间戳，LaunchedEffect 监听到变化后重新计时 20s
+    var catchupLastActionMs by remember { mutableLongStateOf(0L) }
+
+    // 当退出回看时，隐藏控制菜单
+    LaunchedEffect(mainContentState.isCatchupPlaying) {
+        if (!mainContentState.isCatchupPlaying) {
+            catchupControlsVisible = false
+            catchupLastActionMs = 0L
+        }
+    }
+
+    // 20 秒无操作后自动隐藏菜单
+    LaunchedEffect(catchupLastActionMs) {
+        if (catchupLastActionMs > 0L) {
+            catchupControlsVisible = true
+            delay(20_000L)
+            catchupControlsVisible = false
+        }
+    }
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         // 防止切换到其他界面时焦点丢失
@@ -103,7 +135,8 @@ fun LeanbackMainContent(
     LeanbackBackPressHandledArea(
         modifier = modifier,
         onBackPressed = {
-            if (mainContentState.isPanelVisible) mainContentState.isPanelVisible = false
+            if (mainContentState.isCatchupPlaying) mainContentState.stopCatchup()
+            else if (mainContentState.isPanelVisible) mainContentState.isPanelVisible = false
             else if (mainContentState.isSettingsVisible) mainContentState.isSettingsVisible = false
             else if (mainContentState.isQuickPanelVisible) mainContentState.isQuickPanelVisible =
                 false
@@ -118,15 +151,55 @@ fun LeanbackMainContent(
                 .focusable()
                 .handleLeanbackKeyEvents(
                     onUp = {
-                        if (settingsViewModel.iptvChannelChangeFlip) mainContentState.changeCurrentIptvToNext()
-                        else mainContentState.changeCurrentIptvToPrev()
+                        if (mainContentState.isCatchupPlaying) {
+                            // 回看模式：上键加速（1x → 2x → 3x → 1x 循环）
+                            videoPlayerState.changePlaybackSpeed(
+                                when (videoPlayerState.playbackSpeed) {
+                                    1f -> 2f
+                                    2f -> 3f
+                                    else -> 1f
+                                }
+                            )
+                            catchupLastActionMs = System.currentTimeMillis()
+                        } else {
+                            if (settingsViewModel.iptvChannelChangeFlip) mainContentState.changeCurrentIptvToNext()
+                            else mainContentState.changeCurrentIptvToPrev()
+                        }
                     },
                     onDown = {
-                        if (settingsViewModel.iptvChannelChangeFlip) mainContentState.changeCurrentIptvToPrev()
-                        else mainContentState.changeCurrentIptvToNext()
+                        if (mainContentState.isCatchupPlaying) {
+                            // 回看模式：下键减速（3x → 2x → 1x）
+                            videoPlayerState.changePlaybackSpeed(
+                                when (videoPlayerState.playbackSpeed) {
+                                    3f -> 2f
+                                    2f -> 1f
+                                    else -> 1f
+                                }
+                            )
+                            catchupLastActionMs = System.currentTimeMillis()
+                        } else {
+                            if (settingsViewModel.iptvChannelChangeFlip) mainContentState.changeCurrentIptvToPrev()
+                            else mainContentState.changeCurrentIptvToNext()
+                        }
                     },
                     onLeft = {
-                        if (mainContentState.currentIptv.urlList.size > 1) {
+                        if (mainContentState.isCatchupPlaying) {
+                            // 回看模式：连续按左键依次快退 10s/20s/30s
+                            if (catchupSeekResetPending) {
+                                catchupSeekLevel = minOf(catchupSeekLevel + 1, 3)
+                            } else {
+                                catchupSeekLevel = 1
+                                catchupSeekResetPending = true
+                            }
+                            val seekAmount = catchupSeekLevel * 10_000L
+                            mainContentState.catchupSeekBy(-seekAmount)
+                            catchupLastActionMs = System.currentTimeMillis()
+                            coroutineScope.launch {
+                                delay(1200)
+                                catchupSeekResetPending = false
+                                catchupSeekLevel = 0
+                            }
+                        } else if (mainContentState.currentIptv.urlList.size > 1) {
                             mainContentState.changeCurrentIptv(
                                 iptv = mainContentState.currentIptv,
                                 urlIdx = mainContentState.currentIptvUrlIdx - 1,
@@ -134,16 +207,47 @@ fun LeanbackMainContent(
                         }
                     },
                     onRight = {
-                        if (mainContentState.currentIptv.urlList.size > 1) {
+                        if (mainContentState.isCatchupPlaying) {
+                            // 回看模式：连续按右键依次快进 10s/20s/30s
+                            if (catchupSeekResetPending) {
+                                catchupSeekLevel = minOf(catchupSeekLevel + 1, 3)
+                            } else {
+                                catchupSeekLevel = 1
+                                catchupSeekResetPending = true
+                            }
+                            val seekAmount = catchupSeekLevel * 10_000L
+                            mainContentState.catchupSeekBy(seekAmount)
+                            catchupLastActionMs = System.currentTimeMillis()
+                            coroutineScope.launch {
+                                delay(1200)
+                                catchupSeekResetPending = false
+                                catchupSeekLevel = 0
+                            }
+                        } else if (mainContentState.currentIptv.urlList.size > 1) {
                             mainContentState.changeCurrentIptv(
                                 iptv = mainContentState.currentIptv,
                                 urlIdx = mainContentState.currentIptvUrlIdx + 1,
                             )
                         }
                     },
-                    onSelect = { mainContentState.isPanelVisible = true },
+                    onSelect = {
+                        if (mainContentState.isCatchupPlaying) {
+                            // 回看模式：OK 键暂停/播放，同时呼出菜单
+                            videoPlayerState.togglePause()
+                            catchupLastActionMs = System.currentTimeMillis()
+                        } else {
+                            mainContentState.isPanelVisible = true
+                        }
+                    },
                     onLongSelect = { mainContentState.isQuickPanelVisible = true },
-                    onSettings = { mainContentState.isQuickPanelVisible = true },
+                    onSettings = {
+                        if (mainContentState.isCatchupPlaying) {
+                            // 回看模式：设置键呼出/切换菜单显示
+                            catchupLastActionMs = System.currentTimeMillis()
+                        } else {
+                            mainContentState.isQuickPanelVisible = true
+                        }
+                    },
                     onNumber = {
                         if (settingsViewModel.iptvChannelNoSelectEnable) {
                             panelChannelNoSelectState.input(it)
@@ -201,8 +305,19 @@ fun LeanbackMainContent(
                 channelNoProvider = { panelChannelNoSelectState.channelNo }
             )
 
+            LeanbackVisible({ mainContentState.isCatchupPlaying && catchupControlsVisible }) {
+                LeanbackCatchupControlsScreen(
+                    isPlayingProvider = { videoPlayerState.isPlaying },
+                    currentPositionProvider = { mainContentState.catchupOffsetMs + videoPlayerState.currentPosition.coerceAtLeast(0L) },
+                    durationProvider = { mainContentState.catchupDurationMs },
+                    playbackSpeedProvider = { videoPlayerState.playbackSpeed },
+                    seekLevelProvider = { catchupSeekLevel },
+                )
+            }
+
             LeanbackVisible({
                 mainContentState.isTempPanelVisible
+                        && !mainContentState.isCatchupPlaying
                         && !mainContentState.isSettingsVisible
                         && !mainContentState.isPanelVisible
                         && !mainContentState.isQuickPanelVisible
@@ -243,7 +358,7 @@ fun LeanbackMainContent(
                         settingsViewModel.iptvChannelFavoriteListVisible = it
                     },
                     onClose = { mainContentState.isPanelVisible = false },
-                    onCatchupPlay = { mainContentState.playCatchupUrl(it) },
+                    onCatchupPlay = { mainContentState.playCatchup(it) },
                 )
             }
 
@@ -272,7 +387,7 @@ fun LeanbackMainContent(
                     },
                     onClose = { mainContentState.isPanelVisible = false },
                     iptvFavoriteEnableProvider = { settingsViewModel.iptvChannelFavoriteEnable },
-                    onCatchupPlay = { mainContentState.playCatchupUrl(it) },
+                    onCatchupPlay = { mainContentState.playCatchup(it) },
                 )
             }
         }
